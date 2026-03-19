@@ -2,7 +2,7 @@
 
 import json
 import time
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from ._cohere_loop import run_tool_loop_async, run_tool_loop_sync
 from ._extract import (
@@ -120,6 +120,30 @@ class ToolGuard:
             results.append(result)
 
         return results
+
+    def check(self, tool_name, output):
+        # type: (str, Union[str, Dict[str, Any]]) -> Tuple[bool, Union[str, Dict[str, Any]]]
+        """check a tool output and return (safe, sanitized_output).
+
+        the simplest API surface -- returns a boolean and the output to use.
+        if safe is True, sanitized_output is the original output unchanged.
+        if safe is False, sanitized_output is the configured block message.
+        """
+        if isinstance(output, dict):
+            text = json.dumps(output, default=str, ensure_ascii=False)
+            structured = output
+        else:
+            text = output
+            try:
+                structured = json.loads(output)
+            except (json.JSONDecodeError, ValueError):
+                structured = None
+
+        result = self._scan_single(tool_name, text, structured)
+
+        if result.is_blocked():
+            return False, self._config.block_message
+        return True, output
 
     def scan_output(self, tool_name, output):
         # type: (str, Union[str, Dict[str, Any]]) -> List[Finding]

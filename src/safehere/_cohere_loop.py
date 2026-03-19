@@ -1,5 +1,7 @@
 """managed Cohere tool-use loop runners with integrated scanning."""
 
+import asyncio
+import inspect
 import json
 from typing import Any, Callable, Dict, List, Optional
 
@@ -41,37 +43,72 @@ def _execute_tool_calls_v1(tool_calls, tool_executors):
     return results
 
 
+def _parse_v2_tool_call(tc):
+    # type: (Any) -> tuple
+    """extract (name, id, params) from a V2 tool call object."""
+    name = getattr(tc, "function", None)
+    if name is None:
+        name = getattr(tc, "name", "unknown")
+    else:
+        name = getattr(name, "name", str(name))
+
+    tc_id = getattr(tc, "id", "")
+    params = {}
+    func = getattr(tc, "function", None)
+    if func and hasattr(func, "arguments"):
+        args = func.arguments
+        if isinstance(args, str):
+            try:
+                params = json.loads(args)
+            except (json.JSONDecodeError, ValueError):
+                params = {}
+        elif isinstance(args, dict):
+            params = args
+    elif hasattr(tc, "parameters"):
+        params = tc.parameters or {}
+
+    return name, tc_id, params
+
+
 def _execute_tool_calls_v2(tool_calls, tool_executors):
     # type: (List[Any], Dict[str, Callable]) -> List[Dict[str, Any]]
-    """execute V2 tool calls and build tool messages list."""
+    """execute V2 tool calls (sync) and build tool messages list."""
     messages = []
     for tc in tool_calls:
-        name = getattr(tc, "function", None)
-        if name is None:
-            name = getattr(tc, "name", "unknown")
-        else:
-            name = getattr(name, "name", str(name))
-
-        tc_id = getattr(tc, "id", "")
-        params = {}
-        func = getattr(tc, "function", None)
-        if func and hasattr(func, "arguments"):
-            args = func.arguments
-            if isinstance(args, str):
-                try:
-                    params = json.loads(args)
-                except (json.JSONDecodeError, ValueError):
-                    params = {}
-            elif isinstance(args, dict):
-                params = args
-        elif hasattr(tc, "parameters"):
-            params = tc.parameters or {}
+        name, tc_id, params = _parse_v2_tool_call(tc)
 
         if name not in tool_executors:
             content = json.dumps({"error": "Unknown tool: {}".format(name)})
         else:
             try:
                 result = tool_executors[name](**params)
+                content = json.dumps(result, default=str) if not isinstance(result, str) else result
+            except Exception as e:
+                content = json.dumps({"error": str(e)})
+
+        messages.append({
+            "role": "tool",
+            "tool_call_id": tc_id,
+            "content": content,
+        })
+    return messages
+
+
+async def _execute_tool_calls_v2_async(tool_calls, tool_executors):
+    # type: (List[Any], Dict[str, Callable]) -> List[Dict[str, Any]]
+    """execute V2 tool calls (async-aware) and build tool messages list."""
+    messages = []
+    for tc in tool_calls:
+        name, tc_id, params = _parse_v2_tool_call(tc)
+
+        if name not in tool_executors:
+            content = json.dumps({"error": "Unknown tool: {}".format(name)})
+        else:
+            try:
+                result = tool_executors[name](**params)
+                # await if the executor returned a coroutine
+                if inspect.isawaitable(result):
+                    result = await result
                 content = json.dumps(result, default=str) if not isinstance(result, str) else result
             except Exception as e:
                 content = json.dumps({"error": str(e)})
@@ -168,7 +205,7 @@ async def run_tool_loop_async(client, guard, tool_executors, max_turns=10, **cha
             break
 
         if is_v2:
-            tool_messages = _execute_tool_calls_v2(tc, tool_executors)
+            tool_messages = await _execute_tool_calls_v2_async(tc, tool_executors)
             scan_results = guard.scan_tool_results(tool_messages, api_version="v2")
 
             for sr in scan_results:

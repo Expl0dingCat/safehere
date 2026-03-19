@@ -72,9 +72,61 @@ def extract_v1_tool_results(tool_results):
     return extracted
 
 
-def extract_v2_messages(messages):
-    # type: (List[Any]) -> List[ExtractedOutput]
-    """extract text and structured data from V2 tool messages."""
+def build_tool_call_map(messages):
+    # type: (List[Any]) -> Dict[str, str]
+    """build a map from tool_call_id -> function_name from assistant messages.
+
+    scans the message list for assistant messages containing tool_calls
+    and extracts the id->name mapping. this is needed because V2 tool
+    result messages only carry the call ID, not the function name.
+    """
+    id_to_name = {}  # type: Dict[str, str]
+    for msg in messages:
+        # dict form
+        if isinstance(msg, dict):
+            role = msg.get("role", "")
+            if role != "assistant":
+                continue
+            tool_calls = msg.get("tool_calls", []) or []
+        else:
+            role = getattr(msg, "role", "")
+            if role != "assistant":
+                continue
+            tool_calls = getattr(msg, "tool_calls", None) or []
+            # V2 response wraps in .message
+            if not tool_calls and hasattr(msg, "message"):
+                tool_calls = getattr(msg.message, "tool_calls", None) or []
+
+        for tc in tool_calls:
+            tc_id = ""
+            tc_name = "unknown"
+            if isinstance(tc, dict):
+                tc_id = tc.get("id", "")
+                func = tc.get("function", {})
+                tc_name = func.get("name", "unknown") if isinstance(func, dict) else str(func)
+            else:
+                tc_id = getattr(tc, "id", "")
+                func = getattr(tc, "function", None)
+                if func:
+                    tc_name = getattr(func, "name", None) or "unknown"
+                else:
+                    tc_name = getattr(tc, "name", "unknown")
+            if tc_id:
+                id_to_name[tc_id] = tc_name
+    return id_to_name
+
+
+def extract_v2_messages(messages, tool_call_map=None):
+    # type: (List[Any], Optional[Dict[str, str]]) -> List[ExtractedOutput]
+    """extract text and structured data from V2 tool messages.
+
+    if tool_call_map is provided, it maps tool_call_id -> function_name
+    so per-tool policies and schemas work correctly. without it, falls
+    back to the call ID (which breaks per-tool config).
+    """
+    if tool_call_map is None:
+        tool_call_map = build_tool_call_map(messages)
+
     extracted = []  # type: List[ExtractedOutput]
     for i, msg in enumerate(messages):
         if isinstance(msg, dict):
@@ -89,7 +141,9 @@ def extract_v2_messages(messages):
         if role != "tool":
             continue
 
-        tool_name = str(tool_call_id) if tool_call_id else "unknown"
+        # resolve call ID to function name via the map
+        call_id_str = str(tool_call_id) if tool_call_id else ""
+        tool_name = tool_call_map.get(call_id_str, call_id_str or "unknown")
 
         if isinstance(content, str):
             try:

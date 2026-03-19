@@ -70,12 +70,29 @@ class ScoringEngine:
             for kind, weight in self._weights.items()
         )
 
-        # amplify when multiple detector layers fire
+        # corroboration: independent detectors agreeing is stronger evidence
+        # than any single detector. if pattern + heuristic both fire, the
+        # chance of coincidental FP drops multiplicatively.
         active = sum(1 for s in detector_scores.values() if s > 0.1)
         if active >= 3:
             combined = min(1.0, combined * 1.30)
         elif active >= 2:
             combined = min(1.0, combined * 1.15)
+
+        # single-detector floor: without this, a detector weighted at 0.25
+        # can never reach BLOCK (0.70) alone even at score 1.0. the
+        # heuristic scanner catches attacks no other layer sees — its
+        # score shouldn't be suppressed by silence from other layers.
+        max_detector = max(detector_scores.values())
+        if max_detector >= 0.65:
+            combined = max(combined, 0.75)
+        elif max_detector >= 0.50:
+            # if multiple detectors are active, the corroboration is
+            # sufficient evidence to push toward BLOCK
+            if active >= 2:
+                combined = max(combined, 0.70)
+            else:
+                combined = max(combined, 0.50)
 
         max_severity = max(f.severity for f in findings)
 

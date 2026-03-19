@@ -84,9 +84,14 @@ _INJECTION_MARKERS = [
 ]
 
 
-def _check_shape(value, schema, path, findings, strict, is_baseline):
-    # type: (Any, Any, str, List[Finding], bool, bool) -> None
+_MAX_SCHEMA_DEPTH = 50
+
+
+def _check_shape(value, schema, path, findings, strict, is_baseline, _depth=0):
+    # type: (Any, Any, str, List[Finding], bool, bool, int) -> None
     """recursively compare value against schema."""
+    if _depth > _MAX_SCHEMA_DEPTH:
+        return
     if schema is ANY:
         return
 
@@ -150,7 +155,7 @@ def _check_shape(value, schema, path, findings, strict, is_baseline):
                 _check_shape(
                     value[key], sub_schema,
                     "{}.{}".format(path, key),
-                    findings, strict, is_baseline,
+                    findings, strict, is_baseline, _depth + 1,
                 )
 
         if strict:
@@ -183,7 +188,7 @@ def _check_shape(value, schema, path, findings, strict, is_baseline):
             _check_shape(
                 item, item_schema,
                 "{}[{}]".format(path, i),
-                findings, strict, is_baseline,
+                findings, strict, is_baseline, _depth + 1,
             )
         return
 
@@ -194,7 +199,7 @@ def _scan_string_fields(value, path, findings, _depth=0):
     if _depth > 10:
         return
     if isinstance(value, str):
-        if len(value) > 200:
+        if len(value) > 50:
             lower = value.lower()
             for marker in _INJECTION_MARKERS:
                 if marker in lower:
@@ -216,15 +221,17 @@ def _scan_string_fields(value, path, findings, _depth=0):
             _scan_string_fields(item, "{}[{}]".format(path, i), findings, _depth + 1)
 
 
-def _infer_schema(value):
-    # type: (Any) -> Any
+def _infer_schema(value, _depth=0):
+    # type: (Any, int) -> Any
     """infer a schema from a concrete value for auto-baseline."""
+    if _depth > _MAX_SCHEMA_DEPTH:
+        return ANY
     if isinstance(value, dict):
-        return {k: _infer_schema(v) for k, v in value.items()}
+        return {k: _infer_schema(v, _depth + 1) for k, v in value.items()}
     elif isinstance(value, list):
         if not value:
             return [ANY]
-        return [_infer_schema(value[0])]
+        return [_infer_schema(value[0], _depth + 1)]
     elif isinstance(value, bool):
         return bool  # bool is a subclass of int, so check first
     elif isinstance(value, int):

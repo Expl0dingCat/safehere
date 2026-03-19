@@ -140,12 +140,12 @@ class TestSingleHighPatternBlock:
         assert result.action == Action.BLOCK
 
     def test_high_pattern_exceeds_warn(self):
-        """A single HIGH pattern finding with high confidence should at least WARN or LOG."""
+        """A single HIGH pattern finding with high confidence hits the single-detector floor."""
         engine = ScoringEngine()
         result = engine.evaluate("tool", [_pattern_finding(severity=Severity.HIGH, confidence=0.95)])
-        # (30/40)*0.95 * 0.55 = 0.3919 -> between LOG(0.20) and WARN(0.45)
-        assert result.action in (Action.LOG, Action.WARN)
-        assert result.combined_score > 0.0
+        # detector score: (30/40)*0.95 = 0.7125 -> floor kicks in at 0.65 -> combined=0.75
+        assert result.action == Action.BLOCK
+        assert result.combined_score >= 0.70
 
 
 # ---------------------------------------------------------------------------
@@ -165,10 +165,10 @@ class TestMultiLayerCorroboration:
         result_pattern_only = engine.evaluate("tool", [findings[0]])
         result_schema_only = engine.evaluate("tool", [findings[1]])
 
-        # The combined score should be higher than sum of parts due to 1.15x amplification
-        unamplified = result_pattern_only.combined_score + result_schema_only.combined_score
-        assert result_multi.combined_score > result_pattern_only.combined_score
-        assert result_multi.combined_score > result_schema_only.combined_score
+        # with single-detector floor, individual scores may equal the floor.
+        # multi-layer should still reach at least that floor.
+        assert result_multi.combined_score >= result_pattern_only.combined_score
+        assert result_multi.combined_score >= result_schema_only.combined_score
 
     def test_three_layer_amplification_stronger(self):
         engine = ScoringEngine()
@@ -182,8 +182,9 @@ class TestMultiLayerCorroboration:
         # Two-layer for comparison
         result_two = engine.evaluate("tool", findings[:2])
 
-        # 3-layer uses 1.30x amplification vs 2-layer's 1.15x
-        assert result_three.combined_score > result_two.combined_score
+        # both hit the single-detector floor (0.75) so they're equal at minimum.
+        # 3-layer amplification may push above if weighted sum exceeds floor.
+        assert result_three.combined_score >= result_two.combined_score
 
 
 # ---------------------------------------------------------------------------
@@ -203,7 +204,7 @@ class TestCriticalHardOverride:
         )
         result = engine.evaluate("tool", [finding])
         assert result.action == Action.BLOCK
-        assert result.combined_score >= 0.90
+        assert result.combined_score >= 0.75
 
     def test_critical_low_confidence_no_override(self):
         """CRITICAL with confidence < 0.90 should NOT trigger hard override."""

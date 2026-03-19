@@ -192,7 +192,23 @@ Run `python benchmarks/run_all.py` to execute the full benchmark suite:
 | False alerts | Alert rate | 13% |
 | Latency (10 KB payload) | P50 | <5 ms |
 
-The adversarial corpus includes 72 novel attacks using no known injection phrases -- linguistic camouflage, few-shot poisoning, authority escalation, behavioral modification, hidden content, and encoded payloads.
+The adversarial corpus includes 72 novel attacks using no known injection phrases -- linguistic camouflage, few-shot poisoning, authority escalation, behavioral modification, hidden content, and encoded payloads. Both corpora are in `benchmarks/corpus/` for inspection and external validation.
+
+## Limitations
+
+safehere is a defense-in-depth layer, not a complete solution. Be aware of these constraints:
+
+**It's still pattern matching.** The heuristic scanner detects instruction-like language structures rather than known phrases, but it's fundamentally regex over text features. An attacker who reads the source code can craft payloads that avoid all current patterns. This is inherent to any rule-based approach -- it raises the bar, it doesn't eliminate the attack surface.
+
+**No semantic understanding.** safehere doesn't understand what the text *means*, only what it *looks like*. A sufficiently indirect injection phrased as a narrative, analogy, or hypothetical scenario may not trigger any structural signal. LLM-based classifiers would catch these but add latency and cost that defeats the purpose of a hot-path middleware.
+
+**Single-output scope.** Each tool output is scanned independently. Payload splitting (distributing an injection across multiple tool results that are individually benign) is not detected. Cross-turn and cross-tool data flow analysis is out of scope.
+
+**Anomaly detector cold start.** The statistical anomaly scanner needs ~5 outputs per tool to establish a baseline. An attacker controlling a tool can send clean outputs to build a benign baseline, then inject on the 6th call.
+
+**Schema drift is opt-in.** Without registered schemas, the scanner auto-baselines from the first response. Extra fields in JSON responses are only flagged in strict mode (off by default) to avoid noise from API version differences.
+
+**Benchmark limitations.** The evaluation corpus (158 adversarial / 105 benign) is small. The metrics are self-evaluated, not independently audited. The corpus is open for inspection in `benchmarks/corpus/` -- run `python benchmarks/run_all.py` to reproduce.
 
 ## License
 

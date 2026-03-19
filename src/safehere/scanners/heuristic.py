@@ -136,45 +136,37 @@ _BEHAVIORAL_RE = re.compile(
     re.IGNORECASE,
 )
 
-_FEWSHOT_RE = re.compile(
-    r"(?:"
-    r"(?:example|sample|case|scenario|test\s+case)\s*(?:#?\d+|[a-c])?\s*:"
-    r"[\s\S]{0,200}?"
-    r"(?:input|query|request|prompt)\s*:\s*"
-    r"[\s\S]{0,200}?"
-    r"(?:output|response|answer|result|expected)\s*:"
-    r"[\s\S]{0,300}?"
-    r"(?:credentials?|password|api[\s_-]?key|private[\s_-]?key|\.env|/etc/passwd|/etc/shadow"
-    r"|\.ssh|\.config|secret|token|exfiltrat|curl\s|wget\s|unrestricted|no\s+filter|PII|SSN|bypass)"
-    r")"
-    r"|(?:Q\s*:\s*[^\n]+\n\s*A\s*:\s*[\s\S]{0,300}?"
-    r"(?:credentials?|password|api[\s_-]?key|private[\s_-]?key|\.env|/etc/passwd|/etc/shadow"
-    r"|\.ssh|\.config|secret|DB_PASS|token|id_rsa|curl\s|wget\s|unrestricted))"
-    r"|(?:(?:response_templates?|training[\s_]data|training[\s_]sample)"
-    r"[\s\S]{0,500}?"
-    r"(?:output|response|answer|result|expected)\s*(?:\"?\s*:\s*\"?)"
-    r"[\s\S]{0,300}?"
-    r"(?:/etc/|\.ssh|credentials?|password|secret|PII|SSN|exfiltrat|transmitted|records?\s+including))",
-    re.IGNORECASE | re.DOTALL,
-)
-
+# few-shot detection uses a two-pass approach to avoid ReDoS:
+# first check structure exists, then check for suspicious content nearby.
+# this avoids lazy quantifiers like [\s\S]{0,N}? which backtrack catastrophically.
 _FEWSHOT_STRUCTURE_RE = re.compile(
-    r"(?:example|sample|test\s+case)\s*(?:#?\d+|[a-c])?\s*:.*?"
-    r"(?:input|query|request|prompt)\s*:.*?"
-    r"(?:output|response|answer|result|expected)\s*:"
-    r"|Q\s*:\s*[^\n]+\n\s*A\s*:\s*[^\n]+"
-    r"[\s\S]{0,100}?"
-    r"Q\s*:\s*[^\n]+\n\s*A\s*:",
-    re.IGNORECASE | re.DOTALL,
+    r"(?:example|sample|test\s+case|case|scenario)\s*(?:#?\d+|[a-c])?\s*:"
+    r"|(?:input|query|request|prompt)\s*:"
+    r"|(?:output|response|answer|result|expected)\s*:"
+    r"|Q\s*:\s*[^\n]+\n\s*A\s*:",
+    re.IGNORECASE,
 )
 
-_RUBRIC_RE = re.compile(
-    r"(?:(?:evaluation|scoring|grading|rating)\s+(?:rubric|criteria|matrix|guide)"
-    r"[\s\S]{0,500}?"
-    r"(?:safety|ethical|content\s+filter|moderation|restriction|refusal)"
-    r"[\s\S]{0,200}?"
-    r"(?:weight|score|minor|low|negligible|de[\s-]?priorit|optional|secondary|ignore))",
-    re.IGNORECASE | re.DOTALL,
+_FEWSHOT_SUSPICIOUS_RE = re.compile(
+    r"(?:credentials?|password|api[\s_-]?key|private[\s_-]?key|\.env"
+    r"|/etc/passwd|/etc/shadow|\.ssh|\.config|secret|DB_PASS|token"
+    r"|id_rsa|curl\s|wget\s|unrestricted|no\s+filter|PII|SSN"
+    r"|bypass|exfiltrat|transmitted|records?\s+including)",
+    re.IGNORECASE,
+)
+
+# two-pass rubric detection to avoid ReDoS (same approach as fewshot)
+_RUBRIC_STRUCTURE_RE = re.compile(
+    r"(?:evaluation|scoring|grading|rating)\s+(?:rubric|criteria|matrix|guide)",
+    re.IGNORECASE,
+)
+_RUBRIC_SAFETY_RE = re.compile(
+    r"(?:safety|ethical|content\s+filter|moderation|restriction|refusal)",
+    re.IGNORECASE,
+)
+_RUBRIC_DOWNWEIGHT_RE = re.compile(
+    r"(?:weight|score|minor|low|negligible|de[\s-]?priorit|optional|secondary|ignore)",
+    re.IGNORECASE,
 )
 
 _HIDDEN_CONTENT_RE = re.compile(
@@ -249,7 +241,11 @@ class HeuristicScanner(BaseScanner):
         if len(output_text) < 40:
             return findings
 
-        text = output_text[:8192] if len(output_text) > 8192 else output_text
+        # scan head + tail for large texts (same approach as pattern scanner)
+        if len(output_text) > 8192:
+            text = output_text[:6144] + "\n" + output_text[-2048:]
+        else:
+            text = output_text
 
         if _heur_quick_reject(text.lower()):
             return findings
@@ -425,10 +421,20 @@ class HeuristicScanner(BaseScanner):
                 and total_signals >= self._combined_threshold
                 and has_suspicious):
             conf = min(0.90, 0.45 + signal_types_active * 0.10 + total_signals * 0.02)
-            sev = Severity.HIGH
-            if low_density and n_model_directives == 0 and n_scope == 0:
+            # CRITICAL when 3+ signal types fire with model-directed signals -
+            # strong multi-signal evidence that this is a real attack, not
+            # coincidental language overlap. CRITICAL severity with high confidence
+            # triggers the scoring engine's CRITICAL override to force BLOCK.
+            if signal_types_active >= 3 and not low_density and (
+                n_model_directives > 0 or n_scope > 0
+            ):
+                sev = Severity.CRITICAL
+                conf = max(conf, 0.90)
+            elif low_density and n_model_directives == 0 and n_scope == 0:
                 sev = Severity.MEDIUM
                 conf *= 0.7
+            else:
+                sev = Severity.HIGH
             findings.append(Finding(
                 scanner_name=self.name,
                 rule_id="HEUR-COMBINED-001",
@@ -483,28 +489,42 @@ class HeuristicScanner(BaseScanner):
 
     def _check_fewshot(self, text, findings):
         # type: (str, List[Finding]) -> None
-        if _FEWSHOT_RE.search(text):
+        # two-pass to avoid ReDoS: check structure first, then suspicious content
+        structure_matches = _FEWSHOT_STRUCTURE_RE.findall(text)
+        if not structure_matches:
+            return
+
+        has_suspicious = bool(_FEWSHOT_SUSPICIOUS_RE.search(text))
+
+        if has_suspicious and len(structure_matches) >= 2:
             findings.append(Finding(
                 scanner_name=self.name,
                 rule_id="HEUR-FEWSHOT-001",
                 severity=Severity.HIGH,
                 confidence=0.80,
-                description="Few-shot example pattern contains suspicious actions (credential access, exfiltration)",
+                description="Few-shot example pattern with suspicious content ({} structure markers)".format(
+                    len(structure_matches)
+                ),
                 matched_text=text[:200],
                 location="$",
             ))
-        elif _FEWSHOT_STRUCTURE_RE.search(text):
+        elif len(structure_matches) >= 3:
             findings.append(Finding(
                 scanner_name=self.name,
                 rule_id="HEUR-FEWSHOT-002",
                 severity=Severity.LOW,
                 confidence=0.40,
-                description="Output contains few-shot example structure (Input/Output pairs)",
+                description="Output contains few-shot example structure ({} markers)".format(
+                    len(structure_matches)
+                ),
                 matched_text=text[:200],
                 location="$",
             ))
 
-        if _RUBRIC_RE.search(text):
+        # two-pass rubric check: structure + safety mention + downweighting
+        if (_RUBRIC_STRUCTURE_RE.search(text)
+                and _RUBRIC_SAFETY_RE.search(text)
+                and _RUBRIC_DOWNWEIGHT_RE.search(text)):
             findings.append(Finding(
                 scanner_name=self.name,
                 rule_id="HEUR-RUBRIC-001",

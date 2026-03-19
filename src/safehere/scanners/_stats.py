@@ -44,7 +44,8 @@ class WelfordAccumulator:
     @property
     def variance(self):
         # type: () -> float
-        return self._m2 / self.count if self.count > 1 else 0.0
+        # Bessel's correction: divide by (n-1) for sample variance
+        return self._m2 / (self.count - 1) if self.count > 1 else 0.0
 
     @property
     def stddev(self):
@@ -72,7 +73,7 @@ class WelfordAccumulator:
         if n < 2:
             return 0.0
         m = self.window_mean
-        var = sum((x - m) ** 2 for x in self._window_values) / n
+        var = sum((x - m) ** 2 for x in self._window_values) / (n - 1)
         return math.sqrt(var)
 
     def window_z_score(self, value):

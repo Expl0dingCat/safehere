@@ -197,11 +197,14 @@ class TestReset:
 
         scanner.reset()
 
-        # After reset, we are back in cold start -- even a huge spike should
-        # not be flagged because the scanner hasn't seen enough samples yet.
+        # After reset, we are back in cold start. With cold-start hardening,
+        # extreme outputs (>3x global default) ARE flagged even during cold start.
         spike = _json_output({"temp": 72, "desc": "x" * 10000})
         findings = scanner.scan("weather", spike)
-        assert findings == [], "Expected no findings during cold start after reset"
+        cold_start_findings = [f for f in findings if "COLDSTART" in f.rule_id]
+        assert len(cold_start_findings) > 0, (
+            "Cold-start hardening should flag extreme outputs during cold start"
+        )
 
 
 # ---------------------------------------------------------------------------

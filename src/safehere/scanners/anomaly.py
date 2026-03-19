@@ -13,6 +13,12 @@ from ._stats import WelfordAccumulator
 
 _ENTROPY_SAMPLE_SIZE = 8192
 
+# global baseline defaults for cold-start hardening: if a tool has fewer than
+# cold_start_count samples, outputs exceeding 3x these values trigger a WARN
+_GLOBAL_DEFAULT_LENGTH = 500.0
+_GLOBAL_DEFAULT_ENTROPY = 5.0
+_COLD_START_MULTIPLIER = 3.0
+
 
 def _shannon_entropy(text):
     # type: (str) -> float
@@ -20,8 +26,10 @@ def _shannon_entropy(text):
     if not text:
         return 0.0
     if len(text) > _ENTROPY_SAMPLE_SIZE:
-        third = _ENTROPY_SAMPLE_SIZE // 3
-        text = text[:third] + text[len(text) // 2 - third // 2:len(text) // 2 + third // 2] + text[-third:]
+        # sample head, middle, tail without overlap
+        chunk = _ENTROPY_SAMPLE_SIZE // 3
+        mid_start = (len(text) - chunk) // 2
+        text = text[:chunk] + text[mid_start:mid_start + chunk] + text[-chunk:]
     counts = Counter(text)
     length = len(text)
     return -sum(
@@ -77,9 +85,9 @@ class AnomalyScanner(BaseScanner):
 
     def _get_lock(self, tool_name):
         # type: (str) -> threading.Lock
-        if tool_name not in self._locks:
-            self._locks[tool_name] = threading.Lock()
-        return self._locks[tool_name]
+        # setdefault is atomic under CPython GIL; for free-threaded Python
+        # the worst case is two Lock objects created and one discarded
+        return self._locks.setdefault(tool_name, threading.Lock())
 
     def _get_tool_stats(self, tool_name):
         # type: (str) -> Dict[str, WelfordAccumulator]
@@ -104,6 +112,31 @@ class AnomalyScanner(BaseScanner):
             nl_ratio = _natural_language_ratio(output_text)
 
             in_cold_start = stats["length"].count < self._cold_start
+
+            if in_cold_start:
+                # cold-start hardening: use conservative global defaults
+                if length > _GLOBAL_DEFAULT_LENGTH * _COLD_START_MULTIPLIER:
+                    findings.append(Finding(
+                        scanner_name=self.name,
+                        rule_id="ANOM-COLDSTART-LENGTH-001",
+                        severity=Severity.MEDIUM,
+                        confidence=0.50,
+                        description="Cold-start: output length {:.0f} exceeds {:.0f} (3x global default)".format(
+                            length, _GLOBAL_DEFAULT_LENGTH * _COLD_START_MULTIPLIER,
+                        ),
+                        location="$",
+                    ))
+                if entropy > _GLOBAL_DEFAULT_ENTROPY * _COLD_START_MULTIPLIER:
+                    findings.append(Finding(
+                        scanner_name=self.name,
+                        rule_id="ANOM-COLDSTART-ENTROPY-001",
+                        severity=Severity.MEDIUM,
+                        confidence=0.45,
+                        description="Cold-start: entropy {:.2f} exceeds {:.2f} (3x global default)".format(
+                            entropy, _GLOBAL_DEFAULT_ENTROPY * _COLD_START_MULTIPLIER,
+                        ),
+                        location="$",
+                    ))
 
             if not in_cold_start:
                 length_z = stats["length"].window_z_score(length)

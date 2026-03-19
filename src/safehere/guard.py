@@ -128,16 +128,23 @@ class ToolGuard:
         the simplest API surface -- returns a boolean and the output to use.
         if safe is True, sanitized_output is the original output unchanged.
         if safe is False, sanitized_output is the configured block message.
+
+        note: this writes to the audit log and updates anomaly baselines.
         """
+        if output is None:
+            return True, output
         if isinstance(output, dict):
             text = json.dumps(output, default=str, ensure_ascii=False)
             structured = output
-        else:
+        elif isinstance(output, str):
             text = output
             try:
                 structured = json.loads(output)
             except (json.JSONDecodeError, ValueError):
                 structured = None
+        else:
+            text = str(output)
+            structured = None
 
         result = self._scan_single(tool_name, text, structured)
 
@@ -210,7 +217,7 @@ class ToolGuard:
         try:
             findings = self._pipeline.scan_all(tool_name, text, structured)
         except Exception as e:
-            raise ScanError("Scanner failed on tool '{}': {}".format(tool_name, e))
+            raise ScanError("Scanner failed on tool '{}': {}".format(tool_name, e)) from e
 
         elapsed_ms = (time.monotonic() - start) * 1000
         result = self._scoring.evaluate(tool_name, findings, elapsed_ms)

@@ -1,0 +1,69 @@
+Metadata-Version: 2.4
+Name: safehere
+Version: 0.0.1
+Summary: Runtime tool-output scanning for Cohere agents. Detects and blocks prompt injection attacks in tool results.
+Author: SafeHere Contributors
+License: MIT
+Project-URL: Homepage, https://github.com/Expl0dingCat/safehere
+Project-URL: Documentation, https://github.com/Expl0dingCat/safehere#readme
+Project-URL: Repository, https://github.com/Expl0dingCat/safehere
+Project-URL: Issues, https://github.com/Expl0dingCat/safehere/issues
+Keywords: cohere,ai,security,prompt-injection,tool-use,agent-security
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Security
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: cohere>=4.0.0
+
+# safehere
+
+**Runtime tool-output scanning for Cohere agents.**
+
+Every existing MCP/agent security tool scans the input side: tool descriptions, metadata, call permissions. But CyberArk proved that the most dangerous attacks come through tool outputs — the tool's description and code are clean, but it returns poisoned responses containing hidden instructions that the model follows.
+
+`safehere` is a Python middleware that sits between when a tool returns its result and when that result gets passed back to Cohere's model. It scans every tool output for injected instructions, schema anomalies, and behavioral drift, then blocks or sanitizes suspicious results before they ever reach the model's context window.
+
+## Features
+
+- **Pattern Detection**: Catches known injection signatures, encoded payloads, and instruction-like language in data fields
+- **Schema Drift Detection**: Detects when tools suddenly return different-shaped data than expected
+- **Anomaly Detection**: Identifies output size/entropy deviations from tool baselines
+- **Configurable Policies**: Per-tool policies for log, warn, block, or halt decisions
+- **Audit Trail**: Full structured logging of all scan decisions
+
+## Installation
+
+```bash
+pip install safehere
+```
+
+## Usage
+
+```python
+from cohere import Client
+from safehere import ToolGuard
+
+client = Client(api_key="...")
+guard = ToolGuard(client=client, tools=[...])
+
+# Use in your tool-use loop
+response = guard.run_with_protection(model="command-r", ...)
+```
+
+## Documentation
+
+Full documentation coming soon.
+
+## License
+
+MIT

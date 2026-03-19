@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m pip install build twine --quiet)",
+      "Bash(python -m build)"
+    ]
+  }
+}

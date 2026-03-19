@@ -1,17 +1,52 @@
-"""
-safehere - Runtime tool-output scanning for Cohere agents.
+"""safehere - runtime tool-output scanning for Cohere agents."""
 
-Detects and blocks prompt injection attacks in tool results before they
-reach the model's context window.
-"""
-
-__version__ = "0.0.1"
+__version__ = "0.1.0"
 __author__ = "SafeHere Contributors"
 
-# Placeholder exports - implementation coming soon
-__all__ = ["ToolGuard"]
+from .guard import ToolGuard
+from ._types import (
+    Action,
+    Severity,
+    DetectorKind,
+    Finding,
+    ScanResult,
+    ToolPolicy,
+    GuardConfig,
+)
+from .scanners import BaseScanner, ScannerPipeline
+from .scanners.pattern import PatternScanner
+from .scanners.schema import SchemaDriftScanner, ANY
+from .scanners.anomaly import AnomalyScanner
+from .scanners.heuristic import HeuristicScanner
+from .audit import AuditLogger
+from .scoring import ScoringEngine
+from .exceptions import (
+    SafeHereError,
+    QuarantineError,
+    ConfigurationError,
+    ScanError,
+)
 
-
-class ToolGuard:
-    """Placeholder: Full implementation coming soon."""
-    pass
+__all__ = [
+    "ToolGuard",
+    "Action",
+    "Severity",
+    "DetectorKind",
+    "Finding",
+    "ScanResult",
+    "ToolPolicy",
+    "GuardConfig",
+    "BaseScanner",
+    "ScannerPipeline",
+    "PatternScanner",
+    "SchemaDriftScanner",
+    "AnomalyScanner",
+    "HeuristicScanner",
+    "ANY",
+    "AuditLogger",
+    "ScoringEngine",
+    "SafeHereError",
+    "QuarantineError",
+    "ConfigurationError",
+    "ScanError",
+]

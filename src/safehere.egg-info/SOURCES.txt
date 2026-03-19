@@ -1,8 +1,0 @@
-README.md
-pyproject.toml
-src/safehere/__init__.py
-src/safehere.egg-info/PKG-INFO
-src/safehere.egg-info/SOURCES.txt
-src/safehere.egg-info/dependency_links.txt
-src/safehere.egg-info/requires.txt
-src/safehere.egg-info/top_level.txt

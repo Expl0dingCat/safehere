@@ -1,6 +1,6 @@
 # safehere
 
-Runtime tool-output scanning for AI agents. Detects and blocks prompt injection attacks hiding in tool results before they reach the model.
+Runtime tool-output scanning for Cohere AI agents. Detects and blocks prompt injection attacks hiding in tool results before they reach the model.
 
 Every existing agent security tool scans the input side: tool descriptions, metadata, call permissions. [CyberArk proved](https://www.cyberark.com/resources/threat-research-blog/poison-everywhere-no-output-from-your-mcp-server-is-safe) that the most dangerous attacks come through tool outputs -- the tool's code is clean, but it returns poisoned responses containing hidden instructions that the model follows. No open-source tool defends against this.
 

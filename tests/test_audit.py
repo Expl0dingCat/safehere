@@ -2,10 +2,6 @@
 
 import json
 import logging
-import os
-import tempfile
-
-import pytest
 
 from safehere._types import Action, Finding, ScanResult, Severity
 from safehere.audit import AuditLogger

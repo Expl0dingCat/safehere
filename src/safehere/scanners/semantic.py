@@ -18,7 +18,7 @@ Train / retrain the model:
 
 import os
 import pickle
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional  # noqa: F401
 
 from .._types import Finding, Severity
 from ._base import BaseScanner
@@ -141,7 +141,6 @@ def _load_all_corpus():
 
 def _train():
     """Train the TF-IDF model on 80% of the corpus, report metrics on held-out 20%."""
-    import json
     import time
     from pathlib import Path
 
@@ -193,7 +192,6 @@ def _train():
 
     # evaluate on held-out test set
     test_preds = pipeline.predict(test_texts)
-    test_proba = pipeline.predict_proba(test_texts)[:, 1]
     print("\nHeld-out test set metrics:")
     print(classification_report(
         test_labels, test_preds, target_names=["benign", "adversarial"],

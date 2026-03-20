@@ -2,10 +2,7 @@
 
 import json
 
-import pytest
-
 from safehere._types import Action, Finding, GuardConfig, ScanResult, Severity
-from safehere.exceptions import ConfigurationError
 from safehere.guard import ToolGuard
 from safehere.scanners._base import BaseScanner
 from safehere.scanners.anomaly import AnomalyScanner

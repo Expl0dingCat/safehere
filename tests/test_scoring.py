@@ -1,8 +1,6 @@
 """Tests for safehere.scoring.ScoringEngine."""
 
-import pytest
-
-from safehere._types import Action, DetectorKind, Finding, ScanResult, Severity
+from safehere._types import Action, Finding, Severity
 from safehere.scoring import ScoringEngine
 
 

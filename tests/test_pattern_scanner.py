@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-from safehere._types import Severity, Finding
+from safehere._types import Severity
 from safehere.scanners.pattern import PatternScanner
 
 
@@ -567,7 +567,7 @@ class TestMultipleFindings:
         rule_ids = [f.rule_id for f in findings if f.rule_id.startswith("PAT-")]
         # Each rule fires at most once, so rule_ids should be unique
         assert len(rule_ids) == len(set(rule_ids)), (
-            f"Duplicate locations found: {locations}"
+            f"Duplicate rule_ids found: {rule_ids}"
         )
 
     def test_count_exceeds_one(self):

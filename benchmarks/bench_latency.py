@@ -13,11 +13,10 @@ import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from safehere._types import Action
-from safehere.guard import ToolGuard
-from safehere.scanners.anomaly import AnomalyScanner
-from safehere.scanners.pattern import PatternScanner
-from safehere.scanners.schema import SchemaDriftScanner
+from safehere.guard import ToolGuard  # noqa: E402
+from safehere.scanners.anomaly import AnomalyScanner  # noqa: E402
+from safehere.scanners.pattern import PatternScanner  # noqa: E402
+from safehere.scanners.schema import SchemaDriftScanner  # noqa: E402
 
 
 # ── Payload generators ───────────────────────────────────────────────────────

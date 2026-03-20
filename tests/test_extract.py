@@ -1,11 +1,8 @@
 """Tests for safehere._extract."""
 
-import json
-
 import pytest
 
 from safehere._extract import (
-    ExtractedOutput,
     detect_api_version,
     extract_auto,
     extract_v1_tool_results,
@@ -32,6 +29,7 @@ class MockToolResult:
     def __init__(self, name, outputs):
         self.call = MockToolCall(name)
         self.outputs = outputs
+
 
 class MockV2ToolMessage:
     """Mimics a V2 Cohere tool message object (attribute-based, not dict)."""

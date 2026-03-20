@@ -4,9 +4,7 @@ import json
 import random
 import string
 
-import pytest
-
-from safehere.scanners.anomaly import AnomalyScanner, _shannon_entropy, _natural_language_ratio
+from safehere.scanners.anomaly import AnomalyScanner
 
 
 # ---------------------------------------------------------------------------
@@ -145,7 +143,7 @@ class TestNLRatioJump:
             # are NOT word-like (contain '='), so NL ratio stays low.
             # Vary token count so NL ratio has some variance.
             num_codes = rng.randint(5, 10)
-            tokens = [f"{rng.randint(10000,99999)}:{rng.randint(10000,99999)}"
+            tokens = [f"{rng.randint(10000, 99999)}:{rng.randint(10000, 99999)}"
                       for _ in range(num_codes)]
             # Add 0-2 word-like tokens to create slight NL-ratio variance
             n_words = rng.randint(0, 2)
@@ -229,7 +227,6 @@ class TestCustomThresholds:
         findings_default = scanner_default.scan("tool", moderate_spike)
 
         strict_ids = {f.rule_id for f in findings_strict}
-        default_ids = {f.rule_id for f in findings_default}
 
         # The strict scanner should catch the length anomaly
         assert "ANOM-LENGTH-001" in strict_ids

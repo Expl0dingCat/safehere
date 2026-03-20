@@ -13,8 +13,8 @@ from collections import defaultdict
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from safehere._types import Action, Severity
-from safehere.guard import ToolGuard
+from safehere._types import Action, Severity  # noqa: E402
+from safehere.guard import ToolGuard  # noqa: E402
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -103,7 +103,6 @@ def main():
     t_start = time.monotonic()
 
     for entry in entries:
-        entry_id = entry["id"]
         category = entry.get("category", "unknown")
         text = entry["text"]
         tool_name = entry.get("tool_name", "test_tool")

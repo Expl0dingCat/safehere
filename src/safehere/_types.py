@@ -32,6 +32,7 @@ class DetectorKind(enum.Enum):
     SCHEMA_DRIFT = "schema_drift"
     ANOMALY = "anomaly"
     HEURISTIC = "heuristic"
+    SEMANTIC = "semantic"
 
 
 @dataclasses.dataclass(frozen=True)

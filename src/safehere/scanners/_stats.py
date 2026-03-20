@@ -1,7 +1,7 @@
 """rolling statistics using Welford's online algorithm."""
 
 import math
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional  # noqa: F401 -- used in type comments
 
 
 class WelfordAccumulator:

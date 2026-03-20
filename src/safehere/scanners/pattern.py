@@ -1,9 +1,9 @@
 """pattern-based prompt injection detector."""
 
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple  # noqa: F401 -- used in type comments
 
-from .._types import DetectorKind, Finding, Severity
+from .._types import DetectorKind, Finding, Severity  # noqa: F401 -- DetectorKind used in type comments
 from ._base import BaseScanner
 from ._normalize import (
     extract_encoded_payloads,

@@ -1,15 +1,16 @@
 """scoring engine -- combines findings from all scanners into a final action."""
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional  # noqa: F401 -- used in type comments
 
-from ._types import Action, DetectorKind, Finding, Severity, ScanResult
+from ._types import Action, DetectorKind, Finding, Severity, ScanResult  # noqa: F401 -- Finding used in type comments
 
 
 DEFAULT_WEIGHTS = {
-    DetectorKind.PATTERN: 0.40,
-    DetectorKind.SCHEMA_DRIFT: 0.20,
-    DetectorKind.ANOMALY: 0.15,
+    DetectorKind.PATTERN: 0.35,
+    DetectorKind.SCHEMA_DRIFT: 0.15,
+    DetectorKind.ANOMALY: 0.10,
     DetectorKind.HEURISTIC: 0.25,
+    DetectorKind.SEMANTIC: 0.15,
 }
 
 DEFAULT_THRESHOLDS = {
@@ -24,6 +25,7 @@ _SCANNER_TO_KIND = {
     "schema_drift": DetectorKind.SCHEMA_DRIFT,
     "anomaly": DetectorKind.ANOMALY,
     "heuristic": DetectorKind.HEURISTIC,
+    "semantic": DetectorKind.SEMANTIC,
 }
 
 
@@ -31,7 +33,7 @@ class ScoringEngine:
     """evaluates aggregated findings into a scored action decision."""
 
     def __init__(self, weights=None, thresholds=None, per_tool_thresholds=None):
-        # type: (Optional[Dict[DetectorKind, float]], Optional[Dict[Action, float]], Optional[Dict[str, Dict[Action, float]]]) -> None
+        # type: (Optional[Dict[DetectorKind, float]], Optional[Dict[Action, float]], Optional[Dict[str, Dict[Action, float]]]) -> None  # noqa: E501
         self._weights = weights or dict(DEFAULT_WEIGHTS)
         self._thresholds = thresholds or dict(DEFAULT_THRESHOLDS)
         self._per_tool = per_tool_thresholds or {}

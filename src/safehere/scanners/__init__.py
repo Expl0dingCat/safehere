@@ -1,8 +1,8 @@
 """scanner pipeline and built-in scanners."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional  # noqa: F401 -- used in type comments
 
-from .._types import Finding
+from .._types import Finding  # noqa: F401 -- used in type comments
 from ._base import BaseScanner
 
 

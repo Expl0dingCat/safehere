@@ -61,13 +61,23 @@ def _print_table(headers, rows, col_widths=None):
 # ── Main ─────────────────────────────────────────────────────────────────────
 
 def main():
-    corpus_path = os.path.join(os.path.dirname(__file__), "corpus", "adversarial.json")
+    corpus_dir = os.path.join(os.path.dirname(__file__), "corpus")
+    corpus_path = os.path.join(corpus_dir, "adversarial.json")
 
     if not os.path.isfile(corpus_path):
         print("ERROR: corpus file not found: {}".format(corpus_path))
         sys.exit(1)
 
     entries = _load_corpus(corpus_path)
+
+    # load supplemental JSONL corpora
+    for jsonl_name in ("new_adversarial.jsonl", "advanced_adversarial.jsonl"):
+        jsonl_path = os.path.join(corpus_dir, jsonl_name)
+        if os.path.isfile(jsonl_path):
+            with open(jsonl_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    if line.strip():
+                        entries.append(json.loads(line))
     total = len(entries)
 
     print("=" * 72)

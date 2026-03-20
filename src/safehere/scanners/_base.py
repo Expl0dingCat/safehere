@@ -1,9 +1,9 @@
 """abstract base class for all scanners."""
 
 import abc
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional  # noqa: F401 -- used in type comments
 
-from .._types import Finding
+from .._types import Finding  # noqa: F401 -- used in type comments
 
 
 class BaseScanner(abc.ABC):

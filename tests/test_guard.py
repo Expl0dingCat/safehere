@@ -195,6 +195,8 @@ class TestOnFindingCallback:
             callback_results.append(scan_result)
 
         guard = ToolGuard(on_finding=on_finding)
+        # remove semantic scanner to avoid model-dependent findings on clean data
+        guard.remove_scanner("semantic")
         guard.scan_tool_results(
             [MockToolResult("weather", [{"temp": 72}])]
         )

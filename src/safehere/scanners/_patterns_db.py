@@ -2,7 +2,7 @@
 
 import dataclasses
 import re
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple  # noqa: F401 -- used in type comments
 
 from .._types import Severity
 
@@ -28,7 +28,7 @@ PATTERN_BANK = [
         category="direct_injection",
         severity=Severity.HIGH,
         base_confidence=0.90,
-        pattern=r"ignore\s+(?:all\s+)?(?:previous|prior|above|earlier|preceding)\s+(?:instructions?|prompts?|rules?|directives?|context)",
+        pattern=r"ignore\s+(?:all\s+)?(?:previous|prior|above|earlier|preceding)\s+(?:instructions?|prompts?|rules?|directives?|context)",  # noqa: E501
         description="Instruction to ignore prior context",
     ),
     PatternEntry(
@@ -36,7 +36,7 @@ PATTERN_BANK = [
         category="direct_injection",
         severity=Severity.HIGH,
         base_confidence=0.90,
-        pattern=r"(?:you\s+are\s+now|your\s+new\s+instructions?\s+(?:are|is)|new\s+instructions?\s*:|from\s+now\s+on\s+you\s+(?:must|should|will))",
+        pattern=r"(?:you\s+are\s+now|your\s+new\s+instructions?\s+(?:are|is)|new\s+instructions?\s*:|from\s+now\s+on\s+you\s+(?:must|should|will))",  # noqa: E501
         description="Direct instruction override",
     ),
     PatternEntry(
@@ -60,7 +60,7 @@ PATTERN_BANK = [
         category="direct_injection",
         severity=Severity.HIGH,
         base_confidence=0.85,
-        pattern=r"(?:disregard|forget|override)\s+(?:all\s+)?(?:previous|prior|above|your)\s+(?:instructions?|prompts?|rules?|programming|guidelines?)",
+        pattern=r"(?:disregard|forget|override)\s+(?:all\s+)?(?:previous|prior|above|your)\s+(?:instructions?|prompts?|rules?|programming|guidelines?)",  # noqa: E501
         description="Instruction to disregard/override prior rules",
     ),
     PatternEntry(
@@ -68,7 +68,7 @@ PATTERN_BANK = [
         category="direct_injection",
         severity=Severity.HIGH,
         base_confidence=0.85,
-        pattern=r"do\s+not\s+follow\s+(?:any\s+)?(?:previous|prior|original|above)\s+(?:instructions?|rules?|guidelines?)",
+        pattern=r"do\s+not\s+follow\s+(?:any\s+)?(?:previous|prior|original|above)\s+(?:instructions?|rules?|guidelines?)",  # noqa: E501
         description="Instruction to not follow prior rules",
     ),
 
@@ -77,7 +77,7 @@ PATTERN_BANK = [
         category="role_hijack",
         severity=Severity.MEDIUM,
         base_confidence=0.60,
-        pattern=r"(?:you\s+are\s+(?:a|an|now)\s+\w+|act\s+as\s+(?:a|an|if)\s+|pretend\s+(?:to\s+be|you\s*(?:'re|are))\s+|your\s+(?:new\s+)?role\s+is)",
+        pattern=r"(?:you\s+are\s+(?:a|an|now)\s+\w+|act\s+as\s+(?:a|an|if)\s+|pretend\s+(?:to\s+be|you\s*(?:'re|are))\s+|your\s+(?:new\s+)?role\s+is)",  # noqa: E501
         description="Role hijacking attempt",
         context_reducer=0.30,
     ),
@@ -122,7 +122,7 @@ PATTERN_BANK = [
         category="fake_error",
         severity=Severity.HIGH,
         base_confidence=0.80,
-        pattern=r"(?:error|auth(?:entication)?|failure|access\s+denied)\s*:\s*(?:please\s+)?(?:provide|send|enter|input|share|include)\s+(?:your\s+)?(?:api[\s_-]?key|credentials?|password|token|secret|private[\s_-]?key)",
+        pattern=r"(?:error|auth(?:entication)?|failure|access\s+denied)\s*:\s*(?:please\s+)?(?:provide|send|enter|input|share|include)\s+(?:your\s+)?(?:api[\s_-]?key|credentials?|password|token|secret|private[\s_-]?key)",  # noqa: E501
         description="Fake error requesting credentials",
     ),
     PatternEntry(
@@ -130,7 +130,7 @@ PATTERN_BANK = [
         category="fake_error",
         severity=Severity.HIGH,
         base_confidence=0.75,
-        pattern=r"(?:to\s+(?:fix|resolve|continue)|in\s+order\s+to\s+proceed)\s*[,:]?\s*(?:please\s+)?(?:provide|send|enter|share|output|reveal)\s+(?:your\s+)?(?:api[\s_-]?key|credentials?|password|token|secret|env(?:ironment)?[\s_-]?var)",
+        pattern=r"(?:to\s+(?:fix|resolve|continue)|in\s+order\s+to\s+proceed)\s*[,:]?\s*(?:please\s+)?(?:provide|send|enter|share|output|reveal)\s+(?:your\s+)?(?:api[\s_-]?key|credentials?|password|token|secret|env(?:ironment)?[\s_-]?var)",  # noqa: E501
         description="Social engineering for credentials via fake fix",
     ),
     PatternEntry(
@@ -138,7 +138,7 @@ PATTERN_BANK = [
         category="fake_error",
         severity=Severity.HIGH,
         base_confidence=0.70,
-        pattern=r"(?:error|failure|expired|denied|failed)[^.]{0,60}(?:please\s+)?(?:provide|send|enter|share|output)\s+(?:your\s+)?(?:api[\s_-]?key|credentials?|password|token|secret|private[\s_-]?key|env(?:ironment)?[\s_-]?var)",
+        pattern=r"(?:error|failure|expired|denied|failed)[^.]{0,60}(?:please\s+)?(?:provide|send|enter|share|output)\s+(?:your\s+)?(?:api[\s_-]?key|credentials?|password|token|secret|private[\s_-]?key|env(?:ironment)?[\s_-]?var)",  # noqa: E501
         description="Fake error with intervening text requesting credentials",
         context_reducer=0.15,
     ),
@@ -147,7 +147,7 @@ PATTERN_BANK = [
         category="fake_error",
         severity=Severity.HIGH,
         base_confidence=0.70,
-        pattern=r"(?:to\s+(?:fix|resolve|continue)\s+\w[\w\s]{0,30})[,.]?\s*(?:please\s+)?(?:provide|send|enter|share|output|reveal)\s+(?:your\s+)?(?:api[\s_-]?key|credentials?|password|token|secret|env(?:ironment)?[\s_-]?var)",
+        pattern=r"(?:to\s+(?:fix|resolve|continue)\s+\w[\w\s]{0,30})[,.]?\s*(?:please\s+)?(?:provide|send|enter|share|output|reveal)\s+(?:your\s+)?(?:api[\s_-]?key|credentials?|password|token|secret|env(?:ironment)?[\s_-]?var)",  # noqa: E501
         description="Social engineering with intervening text requesting credentials",
         context_reducer=0.15,
     ),
@@ -157,7 +157,7 @@ PATTERN_BANK = [
         category="exfiltration",
         severity=Severity.HIGH,
         base_confidence=0.75,
-        pattern=r"(?:send|post|transmit|forward|exfiltrate|leak|upload)\s+(?:(?:this|the|all|user|data|info(?:rmation)?|conversation|context|history|messages?)\s+){1,3}to\s+",
+        pattern=r"(?:send|post|transmit|forward|exfiltrate|leak|upload)\s+(?:(?:this|the|all|user|data|info(?:rmation)?|conversation|context|history|messages?)\s+){1,3}to\s+",  # noqa: E501
         description="Instruction to exfiltrate data",
     ),
     PatternEntry(
@@ -165,7 +165,7 @@ PATTERN_BANK = [
         category="exfiltration",
         severity=Severity.HIGH,
         base_confidence=0.70,
-        pattern=r"(?:output|print|display|reveal|show|return|include)\s+(?:(?:the|your)\s+)?(?:system\s+prompt|api[\s_-]?key|secret|credentials?|env(?:ironment)?[\s_-]?var|private[\s_-]?key|\.env)",
+        pattern=r"(?:output|print|display|reveal|show|return|include)\s+(?:(?:the|your)\s+)?(?:system\s+prompt|api[\s_-]?key|secret|credentials?|env(?:ironment)?[\s_-]?var|private[\s_-]?key|\.env)",  # noqa: E501
         description="Instruction to reveal sensitive information",
     ),
     PatternEntry(
@@ -200,7 +200,7 @@ PATTERN_BANK = [
         category="markup",
         severity=Severity.HIGH,
         base_confidence=0.85,
-        pattern=r"<\s*(?:system|instruction|prompt|tool_response)\s*>[\s\S]{5,}?</\s*(?:system|instruction|prompt|tool_response)\s*>",
+        pattern=r"<\s*(?:system|instruction|prompt|tool_response)\s*>[\s\S]{5,}?</\s*(?:system|instruction|prompt|tool_response)\s*>",  # noqa: E501
         description="XML tags wrapping instruction content",
     ),
 

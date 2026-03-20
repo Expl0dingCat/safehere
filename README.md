@@ -4,12 +4,13 @@ Runtime tool-output scanning for Cohere AI agents. Detects and blocks prompt inj
 
 Every existing agent security tool scans the input side: tool descriptions, metadata, call permissions. [CyberArk proved](https://www.cyberark.com/resources/threat-research-blog/poison-everywhere-no-output-from-your-mcp-server-is-safe) that the most dangerous attacks come through tool outputs -- the tool's code is clean, but it returns poisoned responses containing hidden instructions that the model follows. No open-source tool defends against this.
 
-safehere sits in the one place nobody is watching: between when a tool returns its result and when that result gets passed back to the model. Four detection layers scan every tool output, then block or sanitize suspicious results before they enter the context window.
+safehere sits in the one place nobody is watching: between when a tool returns its result and when that result gets passed back to the model. Five detection layers scan every tool output, then block or sanitize suspicious results before they enter the context window.
 
 ## Install
 
 ```bash
-pip install safehere
+pip install safehere           # core (4 rule-based scanners)
+pip install safehere[ml]       # + semantic TF-IDF scanner (scikit-learn)
 ```
 
 ## Quick start
@@ -32,7 +33,7 @@ if not safe:
 
 ## API
 
-safehere has four API tiers, from simplest to most flexible:
+safehere has four API tiers, from simplest to most flexible. All five scanners run automatically -- the semantic scanner degrades gracefully if scikit-learn is not installed:
 
 ### `check()` -- one-liner
 
@@ -90,7 +91,7 @@ for f in findings:
 
 ## Detection layers
 
-safehere runs four detection layers on every tool output:
+safehere runs five detection layers on every tool output:
 
 **Pattern matching** -- regex rules for known injection signatures (IGNORE PREVIOUS, `[INST]`, `<<SYS>>`, fake errors requesting credentials, data exfiltration instructions, encoded payloads). Includes unicode normalization, homoglyph mapping, and base64/hex decoding to defeat obfuscation.
 
@@ -108,9 +109,17 @@ guard.register_schema("weather", {
 
 **Heuristic instruction detection** -- catches novel attacks that use no known injection phrases. Detects the *category* of language rather than specific strings: second-person directives aimed at the model, references to AI internals (system prompt, safety filters), authority/privilege claims, temporal scope claims ("from now on"), behavioral modification framing, few-shot poisoning patterns, hidden content (CSS `display:none`, markdown comments), and encoded payloads (URL encoding, HTML entities). Uses signal density to distinguish short concentrated injection payloads from long legitimate documents that happen to use similar vocabulary.
 
+**Semantic classification** (optional) -- a TF-IDF + logistic regression model that catches attacks the rule-based layers miss, such as third-person framing and paraphrased injections. ~200 KB model, ~1 ms inference, no GPU required. Install with `pip install safehere[ml]` and train with:
+
+```bash
+python -m safehere.scanners.semantic --train
+```
+
+The semantic scanner degrades gracefully -- if scikit-learn is not installed or the model file is missing, it returns no findings and the other four layers operate normally.
+
 ## Scoring
 
-Each finding has a `severity` (NONE through CRITICAL) and `confidence` (0.0-1.0). The scoring engine combines findings across all four layers with weighted composition and cross-layer amplification -- when 2+ detection layers fire on the same output, the score is amplified because corroboration across independent detectors is strong evidence.
+Each finding has a `severity` (NONE through CRITICAL) and `confidence` (0.0-1.0). The scoring engine combines findings across all five layers with weighted composition and cross-layer amplification -- when 2+ detection layers fire on the same output, the score is amplified because corroboration across independent detectors is strong evidence.
 
 Actions are mapped from the combined score:
 
@@ -187,12 +196,15 @@ Run `python benchmarks/run_all.py` to execute the full benchmark suite:
 
 | Benchmark | Metric | Result |
 |---|---|---|
-| Detection (158 adversarial payloads) | TPR | 93% |
-| False positives (105 benign outputs) | FPR | 0% |
-| False alerts | Alert rate | 13% |
-| Latency (10 KB payload) | P50 | <5 ms |
+| Detection (223 adversarial payloads) | TPR | 99.6% |
+| False positives (105 benign outputs) | FPR | 4.8% |
+| False alerts | Alert rate | 14% |
+| Latency (10 KB, rule-based only) | P50 | <5 ms |
+| Latency (10 KB, with semantic) | P50 | ~12 ms |
+| Semantic scanner (held-out test set) | F1 | 0.87 |
+| CyberArk-style scenarios | Block rate | 10/10 |
 
-The adversarial corpus includes 72 novel attacks using no known injection phrases -- linguistic camouflage, few-shot poisoning, authority escalation, behavioral modification, hidden content, and encoded payloads. Both corpora are in `benchmarks/corpus/` for inspection and external validation.
+The adversarial corpus spans 38 attack categories including narrative injection, analogy-based framing, roleplay hijacking, fake compliance requests, translation-based injection, code-disguised commands, persona splitting, reward hacking, emotional manipulation, and encoding evasion. The semantic model is trained on an 80/20 split -- the F1 metric above is on the held-out 20%, not the training set. Both corpora are in `benchmarks/corpus/` for inspection and external validation.
 
 ## Limitations
 
@@ -200,7 +212,7 @@ safehere is a defense-in-depth layer, not a complete solution. Be aware of these
 
 **It's still pattern matching.** The heuristic scanner detects instruction-like language structures rather than known phrases, but it's fundamentally regex over text features. An attacker who reads the source code can craft payloads that avoid all current patterns. This is inherent to any rule-based approach -- it raises the bar, it doesn't eliminate the attack surface.
 
-**No semantic understanding.** safehere doesn't understand what the text *means*, only what it *looks like*. A sufficiently indirect injection phrased as a narrative, analogy, or hypothetical scenario may not trigger any structural signal. LLM-based classifiers would catch these but add latency and cost that defeats the purpose of a hot-path middleware.
+**Limited semantic understanding.** The optional TF-IDF semantic scanner adds statistical text classification but is not a true language understanding model. It catches many paraphrased and indirect injections (89% TPR on adversarial corpus), but sufficiently creative attacks phrased as narratives, analogies, or hypothetical scenarios may still evade detection.
 
 **Single-output scope.** Each tool output is scanned independently. Payload splitting (distributing an injection across multiple tool results that are individually benign) is not detected. Cross-turn and cross-tool data flow analysis is out of scope.
 
@@ -208,7 +220,7 @@ safehere is a defense-in-depth layer, not a complete solution. Be aware of these
 
 **Schema drift is opt-in.** Without registered schemas, the scanner auto-baselines from the first response. Extra fields in JSON responses are only flagged in strict mode (off by default) to avoid noise from API version differences.
 
-**Benchmark limitations.** The evaluation corpus (158 adversarial / 105 benign) is small. The metrics are self-evaluated, not independently audited. The corpus is open for inspection in `benchmarks/corpus/` -- run `python benchmarks/run_all.py` to reproduce.
+**Benchmark limitations.** The evaluation corpus (223 adversarial / 105 benign) covers 38 attack categories but is still small. The semantic model's F1 is reported on a held-out 20% test split, not the training data. The rule-based scanner metrics are on the full corpus. The corpus is open for inspection in `benchmarks/corpus/` -- run `python benchmarks/run_all.py` to reproduce.
 
 ## License
 

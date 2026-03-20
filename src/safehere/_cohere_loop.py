@@ -1,15 +1,10 @@
 """managed Cohere tool-use loop runners with integrated scanning."""
 
-import asyncio
 import inspect
 import json
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List  # noqa: F401 -- used in type comments
 
 from ._extract import (
-    ExtractedOutput,
-    detect_api_version,
-    extract_v1_tool_results,
-    extract_v2_messages,
     replace_v1_tool_result,
     replace_v2_message_content,
 )

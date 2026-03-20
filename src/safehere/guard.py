@@ -2,23 +2,24 @@
 
 import json
 import time
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union  # noqa: F401 -- used in type comments
 
 from ._cohere_loop import run_tool_loop_async, run_tool_loop_sync
-from ._extract import (
+from ._extract import (  # noqa: F401 -- ExtractedOutput used in type comments
     ExtractedOutput,
     extract_auto,
     extract_v1_tool_results,
     extract_v2_messages,
 )
-from ._types import Action, Finding, GuardConfig, ScanResult, ToolPolicy
+from ._types import Action, Finding, GuardConfig, ScanResult, ToolPolicy  # noqa: F401 -- used in type comments
 from .audit import AuditLogger
-from .exceptions import ConfigurationError, QuarantineError, ScanError
-from .scanners import BaseScanner, ScannerPipeline
+from .exceptions import ConfigurationError, QuarantineError, ScanError  # noqa: F401
+from .scanners import BaseScanner, ScannerPipeline  # noqa: F401 -- used in type comments
 from .scanners.anomaly import AnomalyScanner
 from .scanners.heuristic import HeuristicScanner
 from .scanners.pattern import PatternScanner
 from .scanners.schema import SchemaDriftScanner
+from .scanners.semantic import SemanticScanner
 from .scoring import ScoringEngine
 
 
@@ -31,7 +32,7 @@ class ToolGuard:
 
     def __init__(self, config=None, scanners=None, audit_log_path=None,
                  on_finding=None):
-        # type: (Optional[GuardConfig], Optional[List[BaseScanner]], Optional[str], Optional[Callable[[ScanResult], None]]) -> None
+        # type: (Optional[GuardConfig], Optional[List[BaseScanner]], Optional[str], Optional[Callable[[ScanResult], None]]) -> None  # noqa: E501
         self._config = config or GuardConfig()
         self._on_finding = on_finding
 
@@ -46,6 +47,7 @@ class ToolGuard:
                 SchemaDriftScanner(),
                 AnomalyScanner(),
                 HeuristicScanner(),
+                SemanticScanner(),
             ])
 
         for policy in self._config.tool_policies.values():

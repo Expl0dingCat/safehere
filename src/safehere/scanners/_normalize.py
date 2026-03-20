@@ -3,7 +3,7 @@
 import base64
 import re
 import unicodedata
-from typing import List, Tuple
+from typing import List, Tuple  # noqa: F401 -- used in type comments
 
 _ZERO_WIDTH = frozenset([
     "\u200b",  # zero-width space

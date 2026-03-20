@@ -109,12 +109,14 @@ class TestSingleLowFinding:
                     severity=Severity.LOW, confidence=1.0, description="s"),
             Finding(scanner_name="anomaly", rule_id="A1",
                     severity=Severity.LOW, confidence=1.0, description="a"),
+            Finding(scanner_name="heuristic", rule_id="H1",
+                    severity=Severity.LOW, confidence=1.0, description="h"),
         ]
         result = engine.evaluate("tool", findings)
         # Each detector score: (10/40)*1.0 = 0.25
-        # Weighted sum: 0.25*(0.55+0.25+0.20) = 0.25*1.0 = 0.25
-        # 3 active -> amplification 1.30 -> 0.25*1.30 = 0.325
-        # 0.325 >= LOG threshold 0.20 -> LOG
+        # Weighted sum: 0.25*(0.35+0.15+0.10+0.25) = 0.25*0.85 = 0.2125
+        # 4 active -> amplification 1.30 -> 0.2125*1.30 = 0.276
+        # 0.276 >= LOG threshold 0.20 -> LOG
         assert result.action == Action.LOG
 
 

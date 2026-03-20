@@ -1,9 +1,9 @@
 """schema drift detector for tool outputs."""
 
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional  # noqa: F401 -- used in type comments
 
-from .._types import DetectorKind, Finding, Severity
+from .._types import DetectorKind, Finding, Severity  # noqa: F401 -- DetectorKind used in type comments
 from ._base import BaseScanner
 
 

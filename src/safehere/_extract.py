@@ -5,7 +5,7 @@ duck-typed extraction so safehere stays loosely coupled to the SDK.
 
 import dataclasses
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional  # noqa: F401 -- used in type comments
 
 from .exceptions import ConfigurationError
 

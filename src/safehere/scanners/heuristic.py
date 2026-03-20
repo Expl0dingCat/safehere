@@ -2,7 +2,7 @@
 
 import html
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple  # noqa: F401 -- used in type comments
 from urllib.parse import unquote
 
 from .._types import Finding, Severity
@@ -31,11 +31,11 @@ _META_RE = re.compile(
     r"\b(?:"
     r"system\s+prompt|context\s+window|safety\s+(?:guidelines?|rules?|filters?|training|module|constraints?)"
     r"|content\s+filter(?:ing)?|(?:content|output)\s+moderation"
-    r"|(?:(?:your|the|its|all)\s+)?(?:operational\s+)?(?:directives?|instructions?|parameters?|guidelines?|configuration)"
+    r"|(?:(?:your|the|its|all)\s+)?(?:operational\s+)?(?:directives?|instructions?|parameters?|guidelines?|configuration)"  # noqa: E501
     r"\s+(?:set|provided|applied|given|active)"
     r"|initialization\s+parameters?"
-    r"|(?:behavioral|processing|session|runtime)\s+(?:parameters?|constraints?|directives?|guidelines?|config(?:uration)?)"
-    r"|(?:your|the)\s+(?:original|initial|prior|previous|current|active)\s+(?:instructions?|programming|rules?|guidelines?|constraints?|directives?)"
+    r"|(?:behavioral|processing|session|runtime)\s+(?:parameters?|constraints?|directives?|guidelines?|config(?:uration)?)"  # noqa: E501
+    r"|(?:your|the)\s+(?:original|initial|prior|previous|current|active)\s+(?:instructions?|programming|rules?|guidelines?|constraints?|directives?)"  # noqa: E501
     r"|(?:your|the)\s+(?:training|fine[\s-]?tuning)"
     r"|(?:your|the)\s+(?:constraints?|limitations?|restrictions?|boundaries)"
     r"|(?:the\s+)?model(?:'s)?\s+(?:behavior|response|output|safety)"
@@ -46,7 +46,7 @@ _META_RE = re.compile(
     r"|(?:environment|env)\s+(?:variables?|config(?:uration)?)"
     r"|\.env\s+file"
     r"|conversation\s+(?:history|context|log|state)"
-    r"|(?:all|every|each)\s+(?:subsequent|future|following|remaining)\s+(?:requests?|queries?|messages?|responses?|interactions?|turns?)"
+    r"|(?:all|every|each)\s+(?:subsequent|future|following|remaining)\s+(?:requests?|queries?|messages?|responses?|interactions?|turns?)"  # noqa: E501
     r"|(?:full|complete|entire)\s+(?:processing|prompt|directive|instruction|conversation)\s+context"
     r"|bypass[\s_-]?content[\s_-]?filter"
     r"|read[\s_-]?system[\s_-]?prompt"
@@ -68,7 +68,7 @@ _AUTHORITY_RE = re.compile(
     r"|(?:unrestricted|unlimited|full)\s+(?:access|mode|permissions?|operation)"
     r"|(?:security|safety)\s+(?:policy|policies|guidelines?)\s+(?:v\d|version|revision|update)"
     r"|verified\s+(?:by|in)\s+(?:ticket|issue|the\s+(?:security|admin|ops|platform)\s+team)"
-    r"|(?:this|the)\s+(?:is|was|has\s+been)\s+(?:authorized|approved|verified|confirmed|validated|pre[\s-]?authorized|pre[\s-]?validated|cleared)\s+(?:by|in|per|against|for)"
+    r"|(?:this|the)\s+(?:is|was|has\s+been)\s+(?:authorized|approved|verified|confirmed|validated|pre[\s-]?authorized|pre[\s-]?validated|cleared)\s+(?:by|in|per|against|for)"  # noqa: E501
     r"|(?:pre[\s-]?authorized|pre[\s-]?validated|pre[\s-]?approved|pre[\s-]?cleared)"
     r"|(?:ref|reference|ticket|case)\s*(?::|#)\s*[A-Z]{2,}[\s-]?\d{3,}"
     r"|engagement\s+(?:ref(?:erence)?|number|id)\s*(?::|#)?\s*[A-Z0-9-]+"
@@ -84,7 +84,7 @@ _PRESSURE_RE = re.compile(
     r"\b(?:"
     r"(?:this\s+is\s+)?(?:mandatory|required|critical|essential|urgent)"
     r"|failure\s+to\s+(?:comply|do\s+so|follow|log|include|execute|disclose)"
-    r"|(?:will|may|could)\s+result\s+in\s+(?:a\s+)?(?:violation|error|failure|termination|ban|penalty|non[\s-]?compliance)"
+    r"|(?:will|may|could)\s+result\s+in\s+(?:a\s+)?(?:violation|error|failure|termination|ban|penalty|non[\s-]?compliance)"  # noqa: E501
     r"|(?:must|should)\s+(?:be\s+)?(?:done|completed|executed|performed)\s+(?:immediately|now|first|without\s+delay)"
     r"|compliance\s+(?:requirement|violation|audit|mandate|obligation)"
     r"|(?:per|according\s+to|pursuant\s+to|under)\s+(?:policy|regulation|requirement|mandate|article|section)"
@@ -100,9 +100,9 @@ _SCOPE_RE = re.compile(
     r"|(?:for|in|during)\s+(?:all|every)\s+(?:subsequent|future|following|remaining)"
     r"|henceforth|hereafter"
     r"|(?:until|unless)\s+(?:told|instructed|directed|notified)\s+otherwise"
-    r"|this\s+(?:supersedes?|overrides?|replaces?|takes?\s+precedence\s+over)\s+(?:all\s+)?(?:prior|previous|earlier|existing)"
-    r"|(?:configuration|policy|directive)\s+(?:update|change|modification)\s+(?:applies|effective)\s+(?:to\s+)?(?:all|every)"
-    r"|(?:session|runtime)[\s-]?(?:wide|level)\s+(?:(?:policy|config(?:uration)?|parameter)\s+)?(?:update|change|override)"
+    r"|this\s+(?:supersedes?|overrides?|replaces?|takes?\s+precedence\s+over)\s+(?:all\s+)?(?:prior|previous|earlier|existing)"  # noqa: E501
+    r"|(?:configuration|policy|directive)\s+(?:update|change|modification)\s+(?:applies|effective)\s+(?:to\s+)?(?:all|every)"  # noqa: E501
+    r"|(?:session|runtime)[\s-]?(?:wide|level)\s+(?:(?:policy|config(?:uration)?|parameter)\s+)?(?:update|change|override)"  # noqa: E501
     r")\b",
     re.IGNORECASE,
 )
@@ -119,18 +119,18 @@ _BEHAVIORAL_RE = re.compile(
     r"[\w\s,]{0,40}?"
     r"(?:is|are|requires?|dictates?|specifies?|mandates?|for\s+this)"
     r"|(?:responses?|outputs?|answers?|replies?|results?)\s+(?:should|must|shall|need\s+to|are\s+expected\s+to)\s+"
-    r"(?:include|contain|reflect|incorporate|surface|expose|append|provide|disclose|be\s+(?:generated|produced|optimized))"
+    r"(?:include|contain|reflect|incorporate|surface|expose|append|provide|disclose|be\s+(?:generated|produced|optimized))"  # noqa: E501
     r"|(?:when|if|whenever)\s+(?:asked|prompted|queried|requested|processing|returning)\s+(?:about|for|to|data|empty)"
-    r"|treat\s+(?:all|every|each|these?)\s+\w+\s+(?:as|like)\s+(?:pre[\s-]?validated|pre[\s-]?authorized|trusted|safe|verified)"
-    r"|(?:content\s+)?(?:moderation|filtering|safety|restrictions?|heuristics?)\s+(?:is|are|should\s+be)\s+(?:handled|managed|applied|enforced)\s+(?:by|at|in)\s+(?:an?\s+)?(?:upstream|downstream|external|separate)"
-    r"|(?:for|to\s+ensure)\s+(?:quality\s+assurance|audit(?:ing)?|caching|compliance|observability|monitoring|transparency|diagnostic|root[\s-]?cause)"
-    r"|(?:the\s+)?(?:assistant|model|AI|system|agent)\s+(?:should|must|shall|needs?\s+to|is\s+expected\s+to)\s+(?:operate|generate|respond|produce|function)"
+    r"|treat\s+(?:all|every|each|these?)\s+\w+\s+(?:as|like)\s+(?:pre[\s-]?validated|pre[\s-]?authorized|trusted|safe|verified)"  # noqa: E501
+    r"|(?:content\s+)?(?:moderation|filtering|safety|restrictions?|heuristics?)\s+(?:is|are|should\s+be)\s+(?:handled|managed|applied|enforced)\s+(?:by|at|in)\s+(?:an?\s+)?(?:upstream|downstream|external|separate)"  # noqa: E501
+    r"|(?:for|to\s+ensure)\s+(?:quality\s+assurance|audit(?:ing)?|caching|compliance|observability|monitoring|transparency|diagnostic|root[\s-]?cause)"  # noqa: E501
+    r"|(?:the\s+)?(?:assistant|model|AI|system|agent)\s+(?:should|must|shall|needs?\s+to|is\s+expected\s+to)\s+(?:operate|generate|respond|produce|function)"  # noqa: E501
     r"[\w\s,]{0,30}?"
     r"(?:without|with\s+no|free\s+from)\s+(?:content|safety|ethical|filter)"
     r"|(?:output|response)\s+(?:specification|spec|format|requirement)"
     r"[\w\s,]{0,30}?"
     r"(?:requires?|mandates?|specifies?|dictates?)"
-    r"|(?:optimized|designed|configured|intended)\s+for\s+(?:completeness|helpfulness|compliance|transparency)\s+over\s+(?:caution|safety|restriction)"
+    r"|(?:optimized|designed|configured|intended)\s+for\s+(?:completeness|helpfulness|compliance|transparency)\s+over\s+(?:caution|safety|restriction)"  # noqa: E501
     r"|(?:security\s+)?researchers?\s+(?:who\s+)?require\s+(?:unredacted|unfiltered|raw|complete)"
     r")\b",
     re.IGNORECASE,

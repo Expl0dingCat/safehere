@@ -4,9 +4,9 @@ import datetime
 import json
 import logging
 import threading
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional  # noqa: F401 -- used in type comments
 
-from ._types import ScanResult
+from ._types import ScanResult  # noqa: F401 -- used in type comments
 
 logger = logging.getLogger("safehere.audit")
 

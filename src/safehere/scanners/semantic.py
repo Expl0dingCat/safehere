@@ -26,13 +26,26 @@ from ._base import BaseScanner
 
 def _default_model_path():
     # type: () -> str
-    return os.path.join(
+    """Find the model file. Checks two locations:
+    1. Inside the installed package (src/safehere/tfidf_injection_clf.pkl)
+    2. In the dev models/ directory (for local development)
+    """
+    # shipped with the package
+    pkg_path = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "tfidf_injection_clf.pkl",
+    )
+    if os.path.isfile(pkg_path):
+        return pkg_path
+    # local dev fallback
+    dev_path = os.path.join(
         os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
             os.path.abspath(__file__)
         )))),
         "models",
         "tfidf_injection_clf.pkl",
     )
+    return dev_path
 
 
 class SemanticScanner(BaseScanner):

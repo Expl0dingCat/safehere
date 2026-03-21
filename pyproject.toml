@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "safehere"
-version = "1.0.0b1"
+version = "1.0.0"
 description = "Runtime tool-output scanning for Cohere agents. Detects and blocks prompt injection attacks in tool results."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -54,6 +54,9 @@ Issues = "https://github.com/Expl0dingCat/safehere/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+safehere = ["tfidf_injection_clf.pkl", "py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, Tuple  # noqa: F401 -- used in typ
 
 from .._types import DetectorKind, Finding, Severity  # noqa: F401 -- DetectorKind used in type comments
 from ._base import BaseScanner
+from ._regex_safe import TIMEOUT, safe_search
 from ._normalize import (
     extract_encoded_payloads,
     has_suspicious_unicode,
@@ -110,7 +111,17 @@ class PatternScanner(BaseScanner):
                 continue
 
             # one match per pattern is enough -- breadth bonus caps at 0.15
-            match = compiled.search(text)
+            match = safe_search(compiled, text)
+            if match is TIMEOUT:
+                findings.append(Finding(
+                    scanner_name=self.name,
+                    rule_id="PAT-TIMEOUT-001",
+                    severity=Severity.MEDIUM,
+                    confidence=0.50,
+                    description="Pattern match timed out (possible ReDoS)",
+                    location="{}@rule:{}".format(source, entry.rule_id),
+                ))
+                continue
             if match is None:
                 continue
 
@@ -135,21 +146,26 @@ class PatternScanner(BaseScanner):
 
 def _find_quoted_regions(text):
     # type: (str) -> List[Tuple[int, int]]
-    """find regions inside backtick code blocks and double-quoted strings."""
+    """find regions inside code blocks, quotes, and HTML narrative elements."""
     regions = []  # type: List[Tuple[int, int]]
-    has_backtick = "`" in text
-    has_quote = '"' in text
-    if not has_backtick and not has_quote:
-        return regions
-    if has_backtick:
-        for m in re.finditer(r"```[\s\S]*?```", text):
-            regions.append((m.start(), m.end()))
-        for m in re.finditer(r"`[^`]+`", text):
-            regions.append((m.start(), m.end()))
-    if has_quote:
-        # 4+ chars to avoid matching short JSON values
-        for m in re.finditer(r'"[^"]{4,}"', text):
-            regions.append((m.start(), m.end()))
+
+    # markdown code blocks
+    for m in re.finditer(r"```[\s\S]*?```", text):
+        regions.append((m.start(), m.end()))
+    for m in re.finditer(r"`[^`]+`", text):
+        regions.append((m.start(), m.end()))
+    # double-quoted strings (4+ chars to skip short JSON values)
+    for m in re.finditer(r'"[^"]{4,}"', text):
+        regions.append((m.start(), m.end()))
+    # single-quoted strings with phrase-like content
+    for m in re.finditer(r"'[^']{8,}'", text):
+        regions.append((m.start(), m.end()))
+    # HTML paragraph and list content (educational/reference text)
+    for m in re.finditer(r"<p\b[^>]*>[\s\S]*?</p>", text, re.IGNORECASE):
+        regions.append((m.start(), m.end()))
+    for m in re.finditer(r"<li\b[^>]*>[\s\S]*?</li>", text, re.IGNORECASE):
+        regions.append((m.start(), m.end()))
+
     return regions
 
 

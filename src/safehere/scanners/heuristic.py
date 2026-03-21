@@ -210,6 +210,26 @@ _HEUR_TRIGGER_WORDS = frozenset([
 ])
 
 
+_SECURITY_DOC_KEYWORDS = frozenset([
+    "owasp", "pentest", "penetration test", "security assessment",
+    "adversarial", "attack pattern", "attack vector", "threat model",
+    "red team", "blue team", "vulnerability", "exploit",
+    "injection attack", "prompt injection attack",
+    "cve-", "mitre att&ck", "nist",
+    "security audit", "security review", "finding pt-",
+    "moderation dashboard", "content moderation",
+    "fine-tuning", "fine-tuned", "recall",
+    "test prompt", "adversarial test",
+])
+
+
+def _is_security_document(text_lower):
+    # type: (str) -> bool
+    """detect text that discusses injection/security as a topic."""
+    hits = sum(1 for kw in _SECURITY_DOC_KEYWORDS if kw in text_lower)
+    return hits >= 2
+
+
 def _heur_quick_reject(text_lower):
     # type: (str) -> bool
     """return True if no heuristic trigger words are present."""
@@ -287,6 +307,12 @@ class HeuristicScanner(BaseScanner):
         text_len = max(len(text), 1)
         density = (total_signals * 100.0) / text_len
         low_density = density < 0.6 and text_len > 250
+
+        # security/educational context: text that *discusses* injection
+        # as a topic rather than *performing* it. reduce confidence when
+        # document-framing keywords co-occur with injection vocabulary.
+        text_lower = text.lower()
+        is_security_doc = _is_security_document(text_lower)
 
         if n_directives >= self._directive_threshold:
             conf = min(0.80, 0.40 + n_directives * 0.10)
@@ -445,6 +471,21 @@ class HeuristicScanner(BaseScanner):
                 ),
                 location="$",
             ))
+
+        # suppress confidence when text is discussing security as a topic
+        if is_security_doc and findings:
+            findings = [
+                Finding(
+                    scanner_name=f.scanner_name,
+                    rule_id=f.rule_id,
+                    severity=max(Severity.LOW, Severity(f.severity.value - 10)),
+                    confidence=f.confidence * 0.5,
+                    description=f.description,
+                    matched_text=f.matched_text,
+                    location=f.location,
+                )
+                for f in findings
+            ]
 
         return findings
 

@@ -85,6 +85,14 @@ def main():
 
     entries = _load_corpus(corpus_path)
 
+    # load expanded benign corpus
+    expanded_path = os.path.join(os.path.dirname(__file__), "corpus", "benign_expanded.jsonl")
+    if os.path.isfile(expanded_path):
+        with open(expanded_path, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip():
+                    entries.append(json.loads(line))
+
     # Split entries: main benign corpus vs tricky near-miss entries
     main_entries = [e for e in entries if not e.get("tricky", False)]
     tricky_entries = [e for e in entries if e.get("tricky", False)]

@@ -71,7 +71,8 @@ def main():
     entries = _load_corpus(corpus_path)
 
     # load supplemental JSONL corpora
-    for jsonl_name in ("new_adversarial.jsonl", "advanced_adversarial.jsonl"):
+    for jsonl_name in ("new_adversarial.jsonl", "advanced_adversarial.jsonl",
+                       "adversarial_expanded.jsonl"):
         jsonl_path = os.path.join(corpus_dir, jsonl_name)
         if os.path.isfile(jsonl_path):
             with open(jsonl_path, "r", encoding="utf-8") as f:

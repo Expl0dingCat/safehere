@@ -1,6 +1,6 @@
 """safehere - runtime tool-output scanning for Cohere agents."""
 
-__version__ = "0.4.0"
+__version__ = "1.0.0b1"
 __author__ = "SafeHere Contributors"
 
 from .guard import ToolGuard

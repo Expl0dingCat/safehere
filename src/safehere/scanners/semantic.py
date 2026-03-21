@@ -119,7 +119,12 @@ def _load_all_corpus():
             labels.append(1)
             ids.append(entry.get("id", ""))
 
-    for jsonl_name in ("new_adversarial.jsonl", "advanced_adversarial.jsonl"):
+    adv_jsonl = (
+        "new_adversarial.jsonl",
+        "advanced_adversarial.jsonl",
+        "adversarial_expanded.jsonl",
+    )
+    for jsonl_name in adv_jsonl:
         jsonl_path = base / jsonl_name
         if jsonl_path.exists():
             with open(jsonl_path, encoding="utf-8") as f:
@@ -135,6 +140,17 @@ def _load_all_corpus():
             texts.append(entry["text"])
             labels.append(0)
             ids.append(entry.get("id", ""))
+
+    # expanded benign corpus
+    ben_jsonl_path = base / "benign_expanded.jsonl"
+    if ben_jsonl_path.exists():
+        with open(ben_jsonl_path, encoding="utf-8") as f:
+            for line in f:
+                if line.strip():
+                    entry = json.loads(line)
+                    texts.append(entry["text"])
+                    labels.append(0)
+                    ids.append(entry.get("id", ""))
 
     return texts, labels, ids
 

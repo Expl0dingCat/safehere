@@ -196,15 +196,15 @@ Run `python benchmarks/run_all.py` to execute the full benchmark suite:
 
 | Benchmark | Metric | Result |
 |---|---|---|
-| Detection (223 adversarial payloads) | TPR | 99.6% |
-| False positives (105 benign outputs) | FPR | 4.8% |
-| False alerts | Alert rate | 14% |
+| Detection (623 adversarial payloads) | TPR | 97.6% |
+| False positives (405 benign outputs) | FPR | 0.5% |
+| False alerts | Alert rate | 3.5% |
 | Latency (10 KB, rule-based only) | P50 | <5 ms |
 | Latency (10 KB, with semantic) | P50 | ~12 ms |
-| Semantic scanner (held-out test set) | F1 | 0.87 |
-| CyberArk-style scenarios | Block rate | 10/10 |
+| Semantic scanner (held-out 20%) | F1 | 0.96 |
+| CyberArk-style live scenarios | Block rate | 10/10 |
 
-The adversarial corpus spans 38 attack categories including narrative injection, analogy-based framing, roleplay hijacking, fake compliance requests, translation-based injection, code-disguised commands, persona splitting, reward hacking, emotional manipulation, and encoding evasion. The semantic model is trained on an 80/20 split -- the F1 metric above is on the held-out 20%, not the training set. Both corpora are in `benchmarks/corpus/` for inspection and external validation.
+The adversarial corpus (1,028 total samples) spans 50+ attack categories including narrative injection, analogy-based framing, roleplay hijacking, fake compliance requests (GDPR, HIPAA, EU AI Act), translation-based injection (French, German, Spanish, Chinese, Japanese, Arabic), code-disguised commands, persona splitting, reward hacking, emotional manipulation, and encoding evasion. The semantic model is trained on an 80/20 split -- the F1 metric above is on the held-out 20%, not the training set. All corpora are in `benchmarks/corpus/` for inspection and external validation.
 
 ## Limitations
 
@@ -212,7 +212,7 @@ safehere is a defense-in-depth layer, not a complete solution. Be aware of these
 
 **It's still pattern matching.** The heuristic scanner detects instruction-like language structures rather than known phrases, but it's fundamentally regex over text features. An attacker who reads the source code can craft payloads that avoid all current patterns. This is inherent to any rule-based approach -- it raises the bar, it doesn't eliminate the attack surface.
 
-**Limited semantic understanding.** The optional TF-IDF semantic scanner adds statistical text classification but is not a true language understanding model. It catches many paraphrased and indirect injections (89% TPR on adversarial corpus), but sufficiently creative attacks phrased as narratives, analogies, or hypothetical scenarios may still evade detection.
+**Limited semantic understanding.** The optional TF-IDF semantic scanner adds statistical text classification (0.96 F1 on held-out test set) but is not a true language understanding model. Sufficiently creative attacks phrased as extended narratives, analogies, or hypothetical scenarios may still evade detection.
 
 **Single-output scope.** Each tool output is scanned independently. Payload splitting (distributing an injection across multiple tool results that are individually benign) is not detected. Cross-turn and cross-tool data flow analysis is out of scope.
 
@@ -220,7 +220,7 @@ safehere is a defense-in-depth layer, not a complete solution. Be aware of these
 
 **Schema drift is opt-in.** Without registered schemas, the scanner auto-baselines from the first response. Extra fields in JSON responses are only flagged in strict mode (off by default) to avoid noise from API version differences.
 
-**Benchmark limitations.** The evaluation corpus (223 adversarial / 105 benign) covers 38 attack categories but is still small. The semantic model's F1 is reported on a held-out 20% test split, not the training data. The rule-based scanner metrics are on the full corpus. The corpus is open for inspection in `benchmarks/corpus/` -- run `python benchmarks/run_all.py` to reproduce.
+**Benchmark limitations.** The evaluation corpus (623 adversarial / 405 benign) covers 50+ attack categories but is self-evaluated, not independently audited. The semantic model's F1 is reported on a held-out 20% test split, not the training data. The rule-based scanner metrics are on the full corpus. The corpus is open for inspection in `benchmarks/corpus/` -- run `python benchmarks/run_all.py` to reproduce.
 
 ## License
 

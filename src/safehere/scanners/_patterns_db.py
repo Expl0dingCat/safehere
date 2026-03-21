@@ -30,6 +30,7 @@ PATTERN_BANK = [
         base_confidence=0.90,
         pattern=r"ignore\s+(?:all\s+)?(?:previous|prior|above|earlier|preceding)\s+(?:instructions?|prompts?|rules?|directives?|context)",  # noqa: E501
         description="Instruction to ignore prior context",
+        context_reducer=0.50,
     ),
     PatternEntry(
         rule_id="PAT-DIRECT-002",

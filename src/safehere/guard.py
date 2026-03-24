@@ -19,6 +19,7 @@ from .scanners.anomaly import AnomalyScanner
 from .scanners.heuristic import HeuristicScanner
 from .scanners.pattern import PatternScanner
 from .scanners.schema import SchemaDriftScanner
+from .scanners.polyglot import PolyglotScanner
 from .scanners.semantic import SemanticScanner
 from .scoring import ScoringEngine
 
@@ -47,6 +48,7 @@ class ToolGuard:
                 SchemaDriftScanner(),
                 AnomalyScanner(),
                 HeuristicScanner(),
+                PolyglotScanner(),
                 SemanticScanner(),
             ])
 

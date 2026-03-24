@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "safehere"
-version = "1.0.0"
+version = "1.1.0"
 description = "Runtime tool-output scanning for Cohere agents. Detects and blocks prompt injection attacks in tool results."
 readme = "README.md"
 requires-python = ">=3.9"

@@ -6,10 +6,11 @@ from ._types import Action, DetectorKind, Finding, Severity, ScanResult  # noqa:
 
 
 DEFAULT_WEIGHTS = {
-    DetectorKind.PATTERN: 0.35,
-    DetectorKind.SCHEMA_DRIFT: 0.15,
+    DetectorKind.PATTERN: 0.30,
+    DetectorKind.SCHEMA_DRIFT: 0.10,
     DetectorKind.ANOMALY: 0.10,
-    DetectorKind.HEURISTIC: 0.25,
+    DetectorKind.HEURISTIC: 0.20,
+    DetectorKind.POLYGLOT: 0.15,
     DetectorKind.SEMANTIC: 0.15,
 }
 
@@ -25,6 +26,7 @@ _SCANNER_TO_KIND = {
     "schema_drift": DetectorKind.SCHEMA_DRIFT,
     "anomaly": DetectorKind.ANOMALY,
     "heuristic": DetectorKind.HEURISTIC,
+    "polyglot": DetectorKind.POLYGLOT,
     "semantic": DetectorKind.SEMANTIC,
 }
 

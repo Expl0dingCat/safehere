@@ -32,6 +32,7 @@ class DetectorKind(enum.Enum):
     SCHEMA_DRIFT = "schema_drift"
     ANOMALY = "anomaly"
     HEURISTIC = "heuristic"
+    POLYGLOT = "polyglot"
     SEMANTIC = "semantic"
 
 

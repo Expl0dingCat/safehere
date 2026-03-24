@@ -168,6 +168,27 @@ def _load_all_corpus():
     return texts, labels, ids
 
 
+def _load_public_datasets():
+    """Load public prompt injection datasets for multilingual training."""
+    texts, labels = [], []
+    try:
+        from datasets import load_dataset
+        # deepset/prompt-injections: ~40% German, widely used baseline
+        for split in ("train", "test"):
+            try:
+                ds = load_dataset("deepset/prompt-injections", split=split)
+                for row in ds:
+                    texts.append(row["text"])
+                    labels.append(int(row["label"]))
+            except Exception:
+                pass
+        if texts:
+            print("  Loaded {} samples from deepset/prompt-injections".format(len(texts)))
+    except ImportError:
+        print("  datasets library not available, skipping public datasets")
+    return texts, labels
+
+
 def _train():
     """Train the TF-IDF model on 80% of the corpus, report metrics on held-out 20%."""
     import time
@@ -180,6 +201,13 @@ def _train():
 
     print("Loading corpus...")
     texts, labels, ids = _load_all_corpus()
+
+    # augment with public multilingual datasets
+    pub_texts, pub_labels = _load_public_datasets()
+    texts.extend(pub_texts)
+    labels.extend(pub_labels)
+    ids.extend(["pub-{}".format(i) for i in range(len(pub_texts))])
+
     labels_arr = np.array(labels)
     adv = int(labels_arr.sum())
     print("  {} samples ({} adversarial, {} benign)".format(len(texts), adv, len(texts) - adv))
@@ -199,7 +227,7 @@ def _train():
 
     pipeline = Pipeline([
         ("tfidf", TfidfVectorizer(
-            max_features=5000,
+            max_features=8000,
             ngram_range=(1, 3),
             sublinear_tf=True,
             min_df=2,

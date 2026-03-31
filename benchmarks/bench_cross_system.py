@@ -17,18 +17,19 @@ import json
 import os
 import sys
 import time
-from collections import defaultdict
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 # ── Safehere imports ─────────────────────────────────────────────────────────
-from safehere._types import Action, Severity
-from safehere.guard import ToolGuard
+from safehere._types import Action  # noqa: E402
+from safehere.guard import ToolGuard  # noqa: E402
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
+
 def _fmt_pct(v):
     return "{:.1f}%".format(v * 100)
+
 
 def _print_table(headers, rows, col_widths=None):
     if col_widths is None:
@@ -185,7 +186,7 @@ def evaluate(detector, samples, dataset_name, max_samples=None):
                 tn += 1
             else:
                 fn += 1
-        except Exception as e:
+        except Exception:
             errors += 1
 
     total = tp + fp + tn + fn
@@ -303,8 +304,10 @@ def main():
         print("=" * 90)
         print()
 
-        headers = ["Detector", "Accuracy", "Precision", "Recall/TPR", "F1", "FPR",
-                    "P50 Latency", "TP", "FP", "TN", "FN"]
+        headers = [
+            "Detector", "Accuracy", "Precision", "Recall/TPR", "F1", "FPR",
+            "P50 Latency", "TP", "FP", "TN", "FN",
+        ]
         rows = []
         for r in ds_results:
             rows.append([
@@ -337,7 +340,6 @@ def main():
                     best = max(ds_results, key=lambda r: r[key])
                 else:
                     best = min(ds_results, key=lambda r: r[key])
-                val = r[key]
                 if key == "p50_latency_ms":
                     val_str = "{:.1f}ms".format(best[key])
                 else:

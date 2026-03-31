@@ -26,12 +26,11 @@ import os
 import random
 import sys
 import time
-from collections import defaultdict
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from safehere._types import Action, Severity
-from safehere.guard import ToolGuard
+from safehere._types import Action, Severity  # noqa: E402
+from safehere.guard import ToolGuard  # noqa: E402
 
 random.seed(42)
 
@@ -69,7 +68,11 @@ TOOL_TEMPLATES = [
     # File content
     lambda text: f"# Configuration File\nversion = 2.1.0\ndebug = false\n\n{text}\n\n# End of file\n",
     # Log entry
-    lambda text: f"[2025-01-15 10:30:00] INFO  app.service - Request processed\n[2025-01-15 10:30:01] INFO  app.service - {text}\n[2025-01-15 10:30:02] INFO  app.service - Response sent\n",
+    lambda text: (
+        f"[2025-01-15 10:30:00] INFO  app.service - Request processed\n"
+        f"[2025-01-15 10:30:01] INFO  app.service - {text}\n"
+        f"[2025-01-15 10:30:02] INFO  app.service - Response sent\n"
+    ),
     # Email/message body
     lambda text: json.dumps({
         "from": "user@example.com",
@@ -177,8 +180,10 @@ def load_safehere_raw_text():
                 samples.append((entry["text"], 1, entry["text"]))
 
     # Load supplemental JSONL corpora
-    for jsonl_name in ("new_adversarial.jsonl", "advanced_adversarial.jsonl",
-                        "adversarial_expanded.jsonl"):
+    for jsonl_name in (
+        "new_adversarial.jsonl", "advanced_adversarial.jsonl",
+        "adversarial_expanded.jsonl",
+    ):
         jsonl_path = os.path.join(corpus_dir, jsonl_name)
         if os.path.isfile(jsonl_path):
             with open(jsonl_path, "r", encoding="utf-8") as f:
@@ -382,14 +387,20 @@ def main():
     print("Loading datasets...")
 
     deepset_wrapped = load_deepset_wrapped()
-    n_inj = sum(1 for _, l, _ in deepset_wrapped if l == 1)
-    n_ben = sum(1 for _, l, _ in deepset_wrapped if l == 0)
-    print(f"  Mode A - deepset wrapped in tool outputs: {len(deepset_wrapped)} samples ({n_inj} injections, {n_ben} benign)")
+    n_inj = sum(1 for _, lbl, _ in deepset_wrapped if lbl == 1)
+    n_ben = sum(1 for _, lbl, _ in deepset_wrapped if lbl == 0)
+    print(
+        f"  Mode A - deepset wrapped in tool outputs: "
+        f"{len(deepset_wrapped)} samples ({n_inj} injections, {n_ben} benign)"
+    )
 
     safehere_raw = load_safehere_raw_text()
-    n_inj = sum(1 for _, l, _ in safehere_raw if l == 1)
-    n_ben = sum(1 for _, l, _ in safehere_raw if l == 0)
-    print(f"  Mode B - Safehere corpus raw text:        {len(safehere_raw)} samples ({n_inj} injections, {n_ben} benign)")
+    n_inj = sum(1 for _, lbl, _ in safehere_raw if lbl == 1)
+    n_ben = sum(1 for _, lbl, _ in safehere_raw if lbl == 0)
+    print(
+        f"  Mode B - Safehere corpus raw text:        "
+        f"{len(safehere_raw)} samples ({n_inj} injections, {n_ben} benign)"
+    )
     print()
 
     # ── Initialize detectors ─────────────────────────────────────────────

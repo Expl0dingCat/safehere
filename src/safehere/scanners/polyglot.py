@@ -26,8 +26,6 @@ All checks are O(n) string scans. Typical latency: <1ms.
 """
 
 import re
-from typing import Any, Dict, List, Optional
-
 from .._types import Finding, Severity
 from ._base import BaseScanner
 
